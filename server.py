@@ -4,28 +4,30 @@ import requests
 import base64
 import os
 
-# Load .env variables
+# Load environment variables from .env
 load_dotenv()
 
-app = Flask(__name__)
-
-# Get the Telegram Bot token securely
+# Get Telegram bot token securely
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
-    raise ValueError("❌ BOT_TOKEN is not set in environment.")
+    raise ValueError("❌ BOT_TOKEN is not set in the environment.")
 
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
+# Initialize Flask app
+app = Flask(__name__)
 
-# Send plain text to user
+# Helper to send plain text message
 def send_text(user_id, text):
-    requests.post(f"{TELEGRAM_API_URL}/sendMessage", json={
-        "chat_id": user_id,
-        "text": text
-    })
+    try:
+        requests.post(f"{TELEGRAM_API_URL}/sendMessage", json={
+            "chat_id": user_id,
+            "text": text
+        })
+    except Exception as e:
+        print(f"[ERROR] send_text: {e}")
 
-
-# Send image to user (base64 format)
+# Helper to send photo (Base64)
 def send_photo(user_id, image_data_url):
     try:
         header, encoded = image_data_url.split(",", 1)
@@ -41,8 +43,7 @@ def send_photo(user_id, image_data_url):
     except Exception as e:
         print(f"[ERROR] send_photo: {e}")
 
-
-# Send audio to user (base64 format)
+# Helper to send audio (Base64)
 def send_audio(user_id, audio_data_url):
     try:
         header, encoded = audio_data_url.split(",", 1)
@@ -58,7 +59,7 @@ def send_audio(user_id, audio_data_url):
     except Exception as e:
         print(f"[ERROR] send_audio: {e}")
 
-
+# Webhook endpoint that frontend sends data to
 @app.route("/api/send", methods=["POST"])
 def handle_data():
     data = request.get_json()
